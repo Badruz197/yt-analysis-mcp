@@ -4,7 +4,7 @@ import { TOOLS } from "../src/tools.js";
 describe("TOOLS definitions", () => {
   it("exports an array of tools", () => {
     expect(Array.isArray(TOOLS)).toBe(true);
-    expect(TOOLS.length).toBe(5);
+    expect(TOOLS.length).toBe(6);
   });
 
   describe("summarize_video tool", () => {
