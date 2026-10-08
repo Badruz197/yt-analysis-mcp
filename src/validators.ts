@@ -50,11 +50,20 @@ export const ExtractFramesInputSchema = z.object({
   resolution: ResolutionSchema,
 });
 
+export const SearchVideosInputSchema = z.object({
+  query: z.string().min(1, "Query cannot be empty"),
+  max_results: z.number().int().min(1).max(25).default(10),
+  order: z
+    .enum(["relevance", "date", "viewCount", "rating"])
+    .default("relevance"),
+});
+
 export type SummarizeInput = z.infer<typeof SummarizeInputSchema>;
 export type AskInput = z.infer<typeof AskInputSchema>;
 export type ExtractScreenshotsInput = z.infer<typeof ExtractScreenshotsInputSchema>;
 export type GetVideoTimestampsInput = z.infer<typeof GetVideoTimestampsInputSchema>;
 export type ExtractFramesInput = z.infer<typeof ExtractFramesInputSchema>;
+export type SearchVideosInput = z.infer<typeof SearchVideosInputSchema>;
 export type DetailLevel = z.infer<typeof DetailLevelSchema>;
 export type Resolution = z.infer<typeof ResolutionSchema>;
 

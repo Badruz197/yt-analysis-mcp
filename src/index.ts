@@ -20,6 +20,7 @@ import {
   ExtractScreenshotsInputSchema,
   GetVideoTimestampsInputSchema,
   ExtractFramesInputSchema,
+  SearchVideosInputSchema,
   type DetailLevel,
 } from "./validators.js";
 
@@ -247,6 +248,47 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         return { content };
+      }
+
+      case "search_youtube_videos": {
+        const input = SearchVideosInputSchema.parse(args);
+
+        if (!youtubeClient) {
+          throw new Error(
+            "YouTube search requires YOUTUBE_API_KEY (or GEMINI_API_KEY with YouTube Data API v3 enabled on the same project)."
+          );
+        }
+
+        const results = await youtubeClient.search(
+          input.query,
+          input.max_results,
+          input.order
+        );
+
+        if (results.length === 0) {
+          return {
+            content: [{ type: "text", text: `No videos found for: ${input.query}` }],
+          };
+        }
+
+        const lines = results.map((r, i) => {
+          const date = r.publishedAt
+            ? new Date(r.publishedAt).toLocaleDateString()
+            : "unknown date";
+          const desc = r.description
+            ? r.description.slice(0, 200) + (r.description.length > 200 ? "…" : "")
+            : "";
+          return `${i + 1}. **${r.title}**\n   Channel: ${r.channelTitle} | Published: ${date}\n   ${r.url}${desc ? `\n   ${desc}` : ""}`;
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Found ${results.length} video(s) for "${input.query}":\n\n${lines.join("\n\n")}`,
+            },
+          ],
+        };
       }
 
       default:

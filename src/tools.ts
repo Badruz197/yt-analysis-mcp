@@ -150,4 +150,32 @@ export const TOOLS: Tool[] = [
       required: ["youtube_url", "timestamps"],
     },
   },
+  {
+    name: "search_youtube_videos",
+    description:
+      "Search YouTube for videos matching a query using the YouTube Data API. Returns titles, channels, URLs and descriptions — use this to find videos before summarizing or analyzing them.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Search terms, same as typing into YouTube's search box",
+        },
+        max_results: {
+          type: "number",
+          minimum: 1,
+          maximum: 25,
+          default: 10,
+          description: "Number of results to return (1-25, default: 10)",
+        },
+        order: {
+          type: "string",
+          enum: ["relevance", "date", "viewCount", "rating"],
+          default: "relevance",
+          description: "Sort order for results (default: relevance)",
+        },
+      },
+      required: ["query"],
+    },
+  },
 ];
