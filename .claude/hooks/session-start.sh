@@ -7,6 +7,4 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-cd "$CLAUDE_PROJECT_DIR"
-npm install --no-audit --no-fund
-npm run build
+sh "$CLAUDE_PROJECT_DIR/scripts/ensure-built.sh"
