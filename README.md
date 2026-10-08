@@ -95,3 +95,16 @@ pnpm build
 ## License
 
 MIT
+
+## Playlist tools (optional Google sign-in)
+
+`list_my_playlists`, `create_playlist`, `add_to_playlist` and `rename_playlist` manage your own playlists. They never delete anything. YouTube doesn't let apps read or change Watch Later.
+
+One-time setup:
+
+1. In Google Cloud Console, in the project where YouTube Data API v3 is enabled, configure the OAuth consent screen (External) and set its publishing status to **In production**. While it's in "Testing", Google expires refresh tokens after 7 days. As the only user you'll see an "unverified app" warning; continue past it.
+2. Create an OAuth client ID of type **Desktop app**.
+3. On your own computer: `YOUTUBE_OAUTH_CLIENT_ID=... YOUTUBE_OAUTH_CLIENT_SECRET=... npm run auth:youtube`, then sign in.
+4. Store the client ID, client secret and the printed refresh token as `YOUTUBE_OAUTH_CLIENT_ID`, `YOUTUBE_OAUTH_CLIENT_SECRET` and `YOUTUBE_OAUTH_REFRESH_TOKEN` wherever the server runs (for cloud sessions, the environment's variables).
+
+Quota: adding a video costs 50 of the default 10,000 daily units, so about 190 adds a day.

@@ -9,6 +9,7 @@ import {
 import { TOOLS } from "./tools.js";
 import { GeminiVideoClient, VideoAnalysisError } from "./gemini-client.js";
 import { YouTubeMetadataClient } from "./youtube-metadata.js";
+import { YouTubePlaylistClient, PlaylistAuthError } from "./youtube-playlists.js";
 import {
   ScreenshotExtractor,
   DependencyError,
@@ -21,6 +22,9 @@ import {
   GetVideoTimestampsInputSchema,
   ExtractFramesInputSchema,
   SearchVideosInputSchema,
+  CreatePlaylistInputSchema,
+  AddToPlaylistInputSchema,
+  RenamePlaylistInputSchema,
   type DetailLevel,
 } from "./validators.js";
 
@@ -39,6 +43,12 @@ const server = new Server(
 let geminiClient: GeminiVideoClient;
 let youtubeClient: YouTubeMetadataClient | null = null;
 const screenshotExtractor = new ScreenshotExtractor();
+const playlistClient = YouTubePlaylistClient.fromEnv();
+
+function requirePlaylistClient(): YouTubePlaylistClient {
+  if (!playlistClient) throw new PlaylistAuthError();
+  return playlistClient;
+}
 
 try {
   geminiClient = new GeminiVideoClient();
@@ -291,6 +301,55 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case "list_my_playlists": {
+        const playlists = await requirePlaylistClient().listPlaylists();
+        const text =
+          playlists.length === 0
+            ? "You have no playlists."
+            : playlists
+                .map((p) => `- ${p.title} (${p.itemCount} videos, ${p.privacy}) · id: ${p.id}`)
+                .join("\n");
+        return { content: [{ type: "text", text }] };
+      }
+
+      case "create_playlist": {
+        const input = CreatePlaylistInputSchema.parse(args);
+        const playlist = await requirePlaylistClient().createPlaylist(
+          input.title,
+          input.description,
+          input.privacy
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Created ${input.privacy} playlist "${playlist.title}" · id: ${playlist.id}\nhttps://www.youtube.com/playlist?list=${playlist.id}`,
+            },
+          ],
+        };
+      }
+
+      case "add_to_playlist": {
+        const input = AddToPlaylistInputSchema.parse(args);
+        const result = await requirePlaylistClient().addVideos(input.playlist_id, input.videos);
+        const lines = [
+          `Added ${result.added.length}, skipped ${result.skipped.length} already in the playlist, failed ${result.failed.length}.`,
+          ...result.failed.map((f) => `- ${f.videoId}: ${f.error}`),
+        ];
+        return {
+          content: [{ type: "text", text: lines.join("\n") }],
+          isError: result.added.length === 0 && result.failed.length > 0,
+        };
+      }
+
+      case "rename_playlist": {
+        const input = RenamePlaylistInputSchema.parse(args);
+        await requirePlaylistClient().renamePlaylist(input.playlist_id, input.title);
+        return {
+          content: [{ type: "text", text: `Renamed playlist ${input.playlist_id} to "${input.title}".` }],
+        };
+      }
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
@@ -306,6 +365,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       errorText = `Dependency error: ${message}`;
     } else if (error instanceof ScreenshotExtractionError) {
       errorText = `Screenshot extraction failed: ${message}`;
+    } else if (error instanceof PlaylistAuthError) {
+      errorText = message;
     } else if (error instanceof VideoAnalysisError) {
       errorText = message;
     } else {

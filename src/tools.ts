@@ -178,4 +178,64 @@ export const TOOLS: Tool[] = [
       required: ["query"],
     },
   },
+  {
+    name: "list_my_playlists",
+    description:
+      "List the signed-in user's own YouTube playlists with their IDs, titles, video counts and privacy. Needs Google sign-in (YOUTUBE_OAUTH_* env vars). Watch Later is not included: YouTube does not expose it.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "create_playlist",
+    description:
+      "Create a new playlist in the signed-in user's YouTube account. Private by default. Returns the new playlist ID. Needs Google sign-in.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Playlist title (max 150 characters)" },
+        description: { type: "string", description: "Optional playlist description" },
+        privacy: {
+          type: "string",
+          enum: ["private", "unlisted", "public"],
+          default: "private",
+          description: "Who can see the playlist (default: private)",
+        },
+      },
+      required: ["title"],
+    },
+  },
+  {
+    name: "add_to_playlist",
+    description:
+      "Add videos to one of the signed-in user's playlists, in the order given. Videos already in the playlist are skipped, so it is safe to re-run. Each added video costs 50 units of the 10,000/day YouTube API quota. Needs Google sign-in.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        playlist_id: { type: "string", description: "Playlist ID (from list_my_playlists or create_playlist)" },
+        videos: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: 100,
+          description: "Video IDs or YouTube URLs",
+        },
+      },
+      required: ["playlist_id", "videos"],
+    },
+  },
+  {
+    name: "rename_playlist",
+    description:
+      "Rename one of the signed-in user's playlists, keeping its description and videos. Needs Google sign-in.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        playlist_id: { type: "string", description: "Playlist ID (from list_my_playlists)" },
+        title: { type: "string", description: "New title (max 150 characters)" },
+      },
+      required: ["playlist_id", "title"],
+    },
+  },
 ];
