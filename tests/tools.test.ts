@@ -4,7 +4,7 @@ import { TOOLS } from "../src/tools.js";
 describe("TOOLS definitions", () => {
   it("exports an array of tools", () => {
     expect(Array.isArray(TOOLS)).toBe(true);
-    expect(TOOLS.length).toBe(6);
+    expect(TOOLS.length).toBe(10);
   });
 
   describe("summarize_video tool", () => {
@@ -182,6 +182,28 @@ describe("TOOLS definitions", () => {
     it("does not require output_dir or resolution", () => {
       expect(tool?.inputSchema.required).not.toContain("output_dir");
       expect(tool?.inputSchema.required).not.toContain("resolution");
+    });
+  });
+
+  describe("playlist tools", () => {
+    it.each([
+      ["list_my_playlists", []],
+      ["create_playlist", ["title"]],
+      ["add_to_playlist", ["playlist_id", "videos"]],
+      ["rename_playlist", ["playlist_id", "title"]],
+    ])("%s exists with required fields %j", (name, required) => {
+      const tool = TOOLS.find((t) => t.name === name);
+      expect(tool).toBeDefined();
+      expect(tool?.inputSchema.type).toBe("object");
+      for (const field of required) {
+        expect(tool?.inputSchema.required).toContain(field);
+      }
+    });
+
+    it("defaults new playlists to private", () => {
+      const tool = TOOLS.find((t) => t.name === "create_playlist");
+      const props = tool?.inputSchema.properties as Record<string, { default?: string }>;
+      expect(props.privacy.default).toBe("private");
     });
   });
 });

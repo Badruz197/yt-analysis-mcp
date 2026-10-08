@@ -58,6 +58,42 @@ export const SearchVideosInputSchema = z.object({
     .default("relevance"),
 });
 
+const VIDEO_ID_REGEX = /^[\w-]{11}$/;
+
+// Accepts a bare 11-character video ID or any supported YouTube URL.
+export const VideoRefSchema = z
+  .string()
+  .trim()
+  .transform((value, ctx) => {
+    if (VIDEO_ID_REGEX.test(value)) return value;
+    try {
+      return extractVideoId(value);
+    } catch {
+      ctx.addIssue({ code: "custom", message: `Not a YouTube video ID or URL: ${value}` });
+      return z.NEVER;
+    }
+  });
+
+export const PlaylistIdSchema = z.string().trim().min(1, "Playlist ID cannot be empty");
+
+export const ListPlaylistsInputSchema = z.object({});
+
+export const CreatePlaylistInputSchema = z.object({
+  title: z.string().trim().min(1, "Title cannot be empty").max(150),
+  description: z.string().max(5000).default(""),
+  privacy: z.enum(["private", "unlisted", "public"]).default("private"),
+});
+
+export const AddToPlaylistInputSchema = z.object({
+  playlist_id: PlaylistIdSchema,
+  videos: z.array(VideoRefSchema).min(1).max(100),
+});
+
+export const RenamePlaylistInputSchema = z.object({
+  playlist_id: PlaylistIdSchema,
+  title: z.string().trim().min(1, "Title cannot be empty").max(150),
+});
+
 export type SummarizeInput = z.infer<typeof SummarizeInputSchema>;
 export type AskInput = z.infer<typeof AskInputSchema>;
 export type ExtractScreenshotsInput = z.infer<typeof ExtractScreenshotsInputSchema>;

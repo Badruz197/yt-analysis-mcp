@@ -12,7 +12,8 @@
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "auth:youtube": "npm run build && node dist/auth-youtube.js"
   },
   "keywords": [
     "mcp",
